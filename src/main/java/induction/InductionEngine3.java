@@ -116,7 +116,7 @@ public class InductionEngine3 {
 
 
 							//Niezachowanie dodatniej monotoniczności przy wystapieniu w bazie wiedzy reguł R1 i R2 (ze słabszej przesłanki w R1 niż w R2 wynika silniejsza konkluzja w R1 niż w R2)
-						  boolean granted = true;
+						  boolean granted = true; //should be false
 							for (SetRule rule : perLevelResult.getOrDefault(level, Collections.emptySet())) {
 								Boolean isPremiseStrongerOrEqual = SetPremiseUtils.isStrongerOrEquals(toAddRule.getSetPremise(), rule.getSetPremise());
 								if (isPremiseStrongerOrEqual != null && isPremiseStrongerOrEqual) {
