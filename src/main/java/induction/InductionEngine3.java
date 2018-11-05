@@ -125,9 +125,9 @@ public class InductionEngine3 {
 										if (isConclusionStrongerOrEquals != null && isConclusionStrongerOrEquals) {
 											//TODO compare as BigDecimal instead of doubleValue()
 											if (rule.getCounters().getIrf().doubleValue() < toAddRule.getCounters().getIrf().doubleValue()) {
-											logger.info(rule.toSimpleString());
-											logger.info(toAddRule.toSimpleString());
-											logger.info("--------------------------------------------------");
+											//logger.info(rule.toSimpleString());
+											//logger.info(toAddRule.toSimpleString());
+											//logger.info("--------------------------------------------------");
 											granted = true;
 											}
 										}

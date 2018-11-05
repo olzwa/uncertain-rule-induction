@@ -12,161 +12,161 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 public class CSVParser implements Parser {
-    private final static Logger logger = LoggerFactory.getLogger(CSVParser.class);
+	private final static Logger logger = LoggerFactory.getLogger(CSVParser.class);
 
-    private List<List<String>> rows = new LinkedList<>();
-    private List<String> columns = new LinkedList<>();
-    private List<String> conditions = new LinkedList<>(); //if a condition is met, the row is rejected
-    private List<Pattern> patterns = new LinkedList<>();
-    int minlength = 1;
-    String separator = ",";
-
-
-    public CSVParser() {
-    }
-
-    public CSVParser(List<String> conditions) {
-        this.conditions = conditions;
-
-        for (String temp : conditions) {
-            patterns.add(Pattern.compile(temp));
-        }
-    }
+	private List<List<String>> rows = new LinkedList<>();
+	private List<String> columns = new LinkedList<>();
+	private List<String> conditions = new LinkedList<>(); //if a condition is met, the row is rejected
+	private List<Pattern> patterns = new LinkedList<>();
+	int minlength = 1;
+	String separator = ",";
 
 
-    public static void main(String[] args) {
+	public CSVParser() {
+	}
 
-        CSVParser obj = new CSVParser();
-        obj.getRows();
+	public CSVParser(List<String> conditions) {
+		this.conditions = conditions;
 
-    }
-
-    public void parse(File file) {
-        try {
-            this.parse(new FileReader(file));
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public void parse(Reader reader) {
-        BufferedReader br = null;
-        String line = "";
-        try {
-            int counter = 0;
-            br = new BufferedReader(reader);
-            while ((line = br.readLine()) != null) {
-
-                List<String> row = new LinkedList<>();
-                String[] cells = line.split(separator);
-
-                boolean rowValidity = true;
+		for (String temp : conditions) {
+			patterns.add(Pattern.compile(temp));
+		}
+	}
 
 
-                for (int i = 0; i < cells.length && rowValidity == true; i++) {
-                    cells[i] = cells[i].replaceAll("\t", "");
-                    if (cells[i].trim().length() < minlength) {
-                        rowValidity = false;
-                        logger.info("\"" + cells[i] + "\"" + " length < minlength ");
-                        break;
-                    } else {
-                        for (Pattern temp : patterns) {
-                            rowValidity = !temp.matcher((cells[i])).find();
-                            if (!rowValidity) {
-                                logger.info("\"" + cells[i] + "\"" + " match found " + temp);
-                            }
-                        }
-                    }
-                }
+	public static void main(String[] args) {
 
-                if (!rowValidity) {
-                    continue;
-                }
+		CSVParser obj = new CSVParser();
+		obj.getRows();
 
-                row.addAll(Arrays.asList(cells));
+	}
+
+	public void parse(File file) {
+		try {
+			this.parse(new FileReader(file));
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		}
+	}
+
+	public void parse(Reader reader) {
+		BufferedReader br = null;
+		String line = "";
+		try {
+			int counter = 0;
+			br = new BufferedReader(reader);
+			while ((line = br.readLine()) != null) {
+
+				List<String> row = new LinkedList<>();
+				String[] cells = line.split(separator);
+
+				boolean rowValidity = true;
 
 
-                if (counter == 0) {
-                    columns.addAll(row);
-                } else {
-                    rows.add(row);
-                }
+				for (int i = 0; i < cells.length && rowValidity == true; i++) {
+					cells[i] = cells[i].replaceAll("\t", "");
+					if (cells[i].trim().length() < minlength) {
+						rowValidity = false;
+						logger.warn("cell of the row: " + Arrays.toString(cells) + " does not match rule: " + cells[i] + "" + " length < minlength. Removing row.");
+						break;
+					} else {
+						for (Pattern temp : patterns) {
+							rowValidity = !temp.matcher((cells[i])).find();
+							if (!rowValidity) {
+								logger.info("\"" + cells[i] + "\"" + " match found, row will be ignored:" + temp);
+							}
+						}
+					}
+				}
 
-                counter++;
-            }
+				if (!rowValidity) {
+					continue;
+				}
 
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            if (br != null) {
-                try {
-                    br.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
+				row.addAll(Arrays.asList(cells));
 
-        System.out.println("CSV read Done");
 
-    }
+				if (counter == 0) {
+					columns.addAll(row);
+				} else {
+					rows.add(row);
+				}
 
-    public List<List<String>> getRows() {
-        return rows;
-    }
+				counter++;
+			}
 
-    public List<String> getColumns() {
-        return columns;
-    }
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		} finally {
+			if (br != null) {
+				try {
+					br.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		}
 
-    public List<Column> getParsedColumns() {
-        return null;
-    }
+		System.out.println("CSV read Done");
 
-    public void setSeparator(String separator) {
-        this.separator = separator;
-    }
+	}
 
-    public void addCondition(String regex) {
+	public List<List<String>> getRows() {
+		return rows;
+	}
 
-        this.conditions.add(regex);
+	public List<String> getColumns() {
+		return columns;
+	}
 
-        patterns.add(Pattern.compile(regex));
-    }
+	public List<Column> getParsedColumns() {
+		return null;
+	}
 
-    public void removeColumn(int columnNumber) {
-        columns.remove(columnNumber);
-        for (List<String> temp : rows) {
-            temp.remove(columnNumber);
-        }
-    }
+	public void setSeparator(String separator) {
+		this.separator = separator;
+	}
 
-    public void setMinlength(int number) {
-        this.minlength = number;
-    }
+	public void addCondition(String regex) {
 
-    public void setConditions(List<String> conditions) {
+		this.conditions.add(regex);
 
-        this.conditions = conditions;
+		patterns.add(Pattern.compile(regex));
+	}
 
-        for (String temp : conditions) {
-            patterns.add(Pattern.compile(temp));
-        }
+	public void removeColumn(int columnNumber) {
+		columns.remove(columnNumber);
+		for (List<String> temp : rows) {
+			temp.remove(columnNumber);
+		}
+	}
 
-    }
+	public void setMinlength(int number) {
+		this.minlength = number;
+	}
 
-    public void skipColumn(int column) {
-        columns.remove(column);
-        for (List<String> singleRow : rows) {
-            if (singleRow.size() >= column) {
-                singleRow.remove(column);
-            } else {
-                System.out.println("Cannot skip!");
-                System.out.println(singleRow);
-            }
-        }
-    }
+	public void setConditions(List<String> conditions) {
+
+		this.conditions = conditions;
+
+		for (String temp : conditions) {
+			patterns.add(Pattern.compile(temp));
+		}
+
+	}
+
+	public void skipColumn(int column) {
+		columns.remove(column);
+		for (List<String> singleRow : rows) {
+			if (singleRow.size() >= column) {
+				singleRow.remove(column);
+			} else {
+				System.out.println("Cannot skip!");
+				System.out.println(singleRow);
+			}
+		}
+	}
 
 }

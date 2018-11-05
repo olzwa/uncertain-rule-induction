@@ -27,6 +27,7 @@ public class Inductor {
 							 List<Integer> forcedConjunctionColumns,
 							 List<Integer> forcedDisjunctionColumns,
 							 Integer minToQualifyPremise) throws IOException {
+
 		CSVParser parser = new CSVParser(Arrays.asList("_", "&"));
 		parser.setSeparator("\t");
 		parser.parse(input);
@@ -35,10 +36,29 @@ public class Inductor {
 		List<String> columns = parser.getColumns();
 		List<List<String>> rawRows = parser.getRows();
 
-		List<Row> rows = rawRows.stream().map(row -> parseRow(row, columns, keyColumnNumber, forcedConjunctionColumns, forcedDisjunctionColumns)).collect(Collectors.toList());
+		for (int i = 0; i < rawRows.size(); i++) {
+			List<String> rawRow = rawRows.get(i);
+			if (rawRow.size() != columns.size()) {
+				logger.warn(rawRow.toString());
+				logger.warn("row column size does not match columns config. Removing row number " + i);
+				rawRows.remove(i);
+			}
+		}
+
+		List<Row> rows = new ArrayList<>(rawRows.size());
+		for (int i = 0; i < rawRows.size(); i++) {
+			List<String> rawRow = rawRows.get(i);
+			try {
+				rows.add(parseRow(rawRow, columns, keyColumnNumber, forcedConjunctionColumns, forcedDisjunctionColumns));
+			} catch (Exception exception) {
+				logger.error("parse exception, row number" + i, exception);
+			}
+		}
+
 
 		Collection<SetRule> result = engine.perform(rows, additionalPremiseColumnsCount, minToQualifyPremise);
 		jsonWriter.write(result, writer);
+
 	}
 
 	public static void main(String[] args) {
@@ -140,20 +160,24 @@ public class Inductor {
 	private static Row parseRow(List<String> row, List<String> columns, List<Integer> keyColNumbers, List<Integer> forcedConjunctionColumns, List<Integer> forcedDisjunctionColumns) {
 		Set<SetFact> premise = new HashSet<>();
 		List<SetFact> conclusions = new ArrayList<>(columns.size());
-		for (int colNumber = 0; colNumber < columns.size(); colNumber++) {
-			SetFact fact;
-			if (forcedConjunctionColumns.contains(colNumber)) {
-				fact = SetFact.createConjunction(columns.get(colNumber) + Config.HEAD_BODY_SEPARATOR + row.get(colNumber));
-			} else if (forcedDisjunctionColumns.contains(colNumber)) {
-				fact = SetFact.createDisjunction(columns.get(colNumber) + Config.HEAD_BODY_SEPARATOR + row.get(colNumber));
-			} else {
-				fact = SetFact.create(columns.get(colNumber) + Config.HEAD_BODY_SEPARATOR + row.get(colNumber));
+		try {
+			for (int colNumber = 0; colNumber < columns.size(); colNumber++) {
+				SetFact fact;
+				if (forcedConjunctionColumns.contains(colNumber)) {
+					fact = SetFact.createConjunction(columns.get(colNumber) + Config.HEAD_BODY_SEPARATOR + row.get(colNumber));
+				} else if (forcedDisjunctionColumns.contains(colNumber)) {
+					fact = SetFact.createDisjunction(columns.get(colNumber) + Config.HEAD_BODY_SEPARATOR + row.get(colNumber));
+				} else {
+					fact = SetFact.create(columns.get(colNumber) + Config.HEAD_BODY_SEPARATOR + row.get(colNumber));
+				}
+				if (keyColNumbers.contains(colNumber)) {
+					premise.add(fact);
+				} else {
+					conclusions.add(fact);
+				}
 			}
-			if (keyColNumbers.contains(colNumber)) {
-				premise.add(fact);
-			} else {
-				conclusions.add(fact);
-			}
+		} catch (Exception exception) {
+			logger.error(row.toString());
 		}
 		return new Row(new SetPremise(premise), conclusions);
 	}

@@ -20,7 +20,7 @@ public class SetPremiseUtils {
 				SetFact setFactFromIsStrongerOrEquals = isStrongerOrEquals.getAllMap().get(key1);
 				Boolean isPremiseStrongerOrEquals = SetFactUtils.isStrongerOrEquals(setFactFromPremise, setFactFromIsStrongerOrEquals);
 				if (isPremiseStrongerOrEquals == null) {
-					logger.warn("Cannot determine strength for: " + setFactFromPremise + "and" + setFactFromIsStrongerOrEquals);
+					logger.trace("Cannot determine strength for: " + setFactFromPremise + "and" + setFactFromIsStrongerOrEquals);
 					return null;
 				} else if (isPremiseStrongerOrEquals) {
 					isStrongerStrength += 1;
